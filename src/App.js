@@ -10,6 +10,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Paper, Typography, Button, Box } from "@mui/material";
 import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import ToggleButton from "@mui/material/ToggleButton";
+import { Stepper, Step, StepLabel } from '@mui/material';
 
 // 기본 폰트 지정 
 const theme = createTheme({
@@ -19,7 +20,31 @@ const theme = createTheme({
   },
 });
 
-// App 컴포넌트 위에 BankSelector 컴포넌트 선언
+//CoverSection 컴포넌트
+const CoverSection = ({ formData, onChange }) => {
+  return (
+    <Box>
+      <TextField
+        fullWidth
+        label="회사명"
+        name="companyName"
+        value={formData.companyName}
+        onChange={onChange}
+        sx={{ mb: 2 }}
+      />
+      <TextField
+        fullWidth
+        label="설립년월일"
+        type="month"
+        name="establishmentDate"
+        value={formData.establishmentDate}
+        onChange={onChange}
+      />
+    </Box>
+  );
+};
+
+// BankSelector 컴포넌트
 const BankSelector = ({ selectedBanks, setSelectedBanks }) => {
   const [input, setInput] = useState("");
 
@@ -159,13 +184,14 @@ const BankSelector = ({ selectedBanks, setSelectedBanks }) => {
 };
 
 const App = () => {
+  const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
     companyName: "",
     establishmentDate: "",
     businessNumber: "",
     representative: "",
-    headquartersphone: "",
-    factoryphone: "",
+    headquartersPhone: "",
+    factoryPhone: "",
     headquartersAddress: "",
     factoryAddress: "",
     businessType: "",
@@ -183,23 +209,36 @@ const App = () => {
     factoryBuilding: "", 
   });
 
+  const steps = ['표지', '기본정보', '미리보기'];
+
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => Math.min(prevActiveStep + 1, steps.length - 1));
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => Math.max(prevActiveStep - 1, 0));
+  };
+
   // 입력 필드 변경 핸들러
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+  
   // 사업자등록번호 변경 핸들러
   const handleBusinessNumberChange = (e) => {
     const { name, value } = e.target;
     const formattedValue = value.replace(/(\d{3})(\d{2})(\d{5})/, "$1-$2-$3");
     setFormData({ ...formData, [name]: formattedValue });
   };
+  
   // 전화번호 변경 핸들러
   const handlePhoneChange = (e) => {
     const { name, value } = e.target;
     const formattedValue = value.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
     setFormData({ ...formData, [name]: formattedValue });
   };
+  
   // 업종 선택 핸들러
   const handleIndustryChange = (selectedLabel) => {
     if (selectedLabel === "기타") {
@@ -222,26 +261,26 @@ const App = () => {
     }
   };
  
- // 공장규모 토글 핸들러
- const handleFactoryScaleToggle = (e, newSelections) => {
-  const updated = {
-    owned: false,
-    large: false,
-    registered: false,
-    unregistered: false,
+  // 공장규모 토글 핸들러
+  const handleFactoryScaleToggle = (e, newSelections) => {
+    const updated = {
+      owned: false,
+      large: false,
+      registered: false,
+      unregistered: false,
+    };
+    newSelections.forEach((key) => {
+      updated[key] = true;
+    });
+    setFormData((prev) => ({ ...prev, factoryScale: updated }));
   };
-  newSelections.forEach((key) => {
-    updated[key] = true;
-  });
-  setFormData((prev) => ({ ...prev, factoryScale: updated }));
-};
 
-// 공장 부지, 건물 입력 핸들러
-const handleFactorySizeChange = (e) => {
-  const { name, value } = e.target;
-  if (/^\d*$/.test(value)) {
-    setFormData({ ...formData, [name]: value });
-  }
+  // 공장 부지, 건물 입력 핸들러
+  const handleFactorySizeChange = (e) => {
+    const { name, value } = e.target;
+    if (/^\d*$/.test(value)) {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   // 산업 분류 리스트
@@ -388,15 +427,15 @@ const handleFactorySizeChange = (e) => {
             style={styles.input2}
             onChange={(e) => handleIndustryChange(e.target.value)}
             value={formData.businessType}
-    >
-        <option value="">업종을 선택하세요</option>
-        {industryList
-          .filter((item) => !item.type)
-          .map((item) => (
-            <option key={item.code} value={item.label}>
-              {item.label}
-            </option>
-          ))}
+          >
+            <option value="">업종을 선택하세요</option>
+            {industryList
+              .filter((item) => !item.type)
+              .map((item) => (
+                <option key={item.code} value={item.label}>
+                  {item.label}
+                </option>
+              ))}
             <option value="기타">기타 (직접 입력)</option>
           </select>
         </div>
@@ -445,138 +484,163 @@ const handleFactorySizeChange = (e) => {
 
      {/* 공장유형 선택 */}
      <ToggleButtonGroup
-  value={Object.entries(formData.factoryScale)
-    .filter(([_, checked]) => checked)
-    .map(([key]) => key)}
-    onChange={handleFactoryScaleToggle}
-    aria-label="factory scale">
+        value={Object.entries(formData.factoryScale)
+          .filter(([_, checked]) => checked)
+          .map(([key]) => key)}
+        onChange={handleFactoryScaleToggle}
+        aria-label="factory scale">
 
-    <ToggleButton value="owned" aria-label="자가공장">자가공장</ToggleButton>
-    <ToggleButton value="large" aria-label="대공장">대공장</ToggleButton>
-    <ToggleButton value="registered" aria-label="등록">등록</ToggleButton>
-    <ToggleButton value="unregistered" aria-label="무등록">무등록</ToggleButton>
-  </ToggleButtonGroup>
+        <ToggleButton value="owned" aria-label="자가공장">자가공장</ToggleButton>
+        <ToggleButton value="large" aria-label="대공장">대공장</ToggleButton>
+        <ToggleButton value="registered" aria-label="등록">등록</ToggleButton>
+        <ToggleButton value="unregistered" aria-label="무등록">무등록</ToggleButton>
+      </ToggleButtonGroup>
 
       {/* 평수 입력 */}
       <div>
-      <div style={{ marginBottom: "10px" }}>
+        <div style={{ marginBottom: "10px" }}>
           <label style={styles.label}>공장 부지</label>
           <input
-        style={styles.input}
-        type="text"
-        name="factoryLand"
-        value={formData.factoryLand}
-        onChange={handleFactorySizeChange}
-        placeholder="단위: 평"
-      />
-    </div>
-    <div>
-      <label style={styles.label}>공장 건물</label>
-      <input
-        style={styles.input}
-        type="text"
-        name="factoryBuilding"
-        value={formData.factoryBuilding}
-        onChange={handleFactorySizeChange}
-        placeholder="단위: 평"
-        />
+            style={styles.input}
+            type="text"
+            name="factoryLand"
+            value={formData.factoryLand}
+            onChange={handleFactorySizeChange}
+            placeholder="단위: 평"
+          />
+        </div>
+        <div>
+          <label style={styles.label}>공장 건물</label>
+          <input
+            style={styles.input}
+            type="text"
+            name="factoryBuilding"
+            value={formData.factoryBuilding}
+            onChange={handleFactorySizeChange}
+            placeholder="단위: 평"
+          />
+        </div>
       </div>
+     </div>
     </div>
-  </div>
-</div>
-);
+  );
 
   //미리보기 섹션 렌더링 
   const renderPreview = () => (
-  <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-  <Typography variant="h6" gutterBottom>👀 미리보기
-  </Typography>
-  <Typography>
-    회사명: {formData.companyName || "미입력"}
-  </Typography>
-  <Typography>
-    설립년월일: {formData.establishmentDate || "미입력"}
-  </Typography>
-  <Typography>
-    사업자등록번호: {formData.businessNumber || "미입력"}
-  </Typography>
-  <Typography>
-    대표자: {formData.representative || "미입력"}
-  </Typography>
-  <Typography>
-    본사 주소: {formData.headquartersAddress || "미입력"}
-  </Typography>
-  <Typography>
-    본사전화: {formData.phone || "미입력"}
-  </Typography>
-  <Typography>
-    공장 주소: {formData.factoryAddress || "미입력"}
-  </Typography>
-  <Typography>
-    공장전화: {formData.phone || "미입력"}
-  </Typography>
-  <Typography>
-    업종:{" "} 
-    {formData.businessType === "기타"
-      ? formData.businessTypeText || "미입력"
-      : formData.businessType || "미선택"}
-  </Typography>
-  <Typography>
-    산업분류코드: {formData.ksicCode || "없음"}
-  </Typography>
-  <Typography>
-    생산품목: {formData.products || "미입력"}
-  </Typography>
-  <Typography>
-    주거래처: {formData.client || "미입력"}
-  </Typography>
-  <Typography>
-    거래은행: {formData.bank.length > 0 ? formData.bank.join(", ") : "미입력"}
-  </Typography>
-  <Typography>
-  공장규모:{" "}
-  {Object.entries(formData.factoryScale)
-    .filter(([_, v]) => v)
-    .map(([k]) => {
-      const labelMap = {
-        owned: "자가공장",
-        large: "대공장",
-        registered: "등록",
-        unregistered: "무등록",
-      };
-      return labelMap[k];
-    })
-    .join(", ") || "미선택"}
-    </Typography>
-    <Typography>
-      공장부지: {formData.factoryLand ? `${formData.factoryLand} 평` : "미입력"}
-    </Typography>
-    <Typography>
-      공장건물: {formData.factoryBuilding ? `${formData.factoryBuilding} 평` : "미입력"}
-    </Typography>
-    {/* 저장 버튼 추가 */}
-    <Button variant="contained" color="primary" sx={{ mt: 3 }}>
-      저장하기
-    </Button>
-  </Paper>
-);
+    <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
+      <Typography variant="h6" gutterBottom>👀 미리보기</Typography>
+      <Typography>
+        회사명: {formData.companyName || "미입력"}
+      </Typography>
+      <Typography>
+        설립년월일: {formData.establishmentDate || "미입력"}
+      </Typography>
+      <Typography>
+        사업자등록번호: {formData.businessNumber || "미입력"}
+      </Typography>
+      <Typography>
+        대표자: {formData.representative || "미입력"}
+      </Typography>
+      <Typography>
+        본사 주소: {formData.headquartersAddress || "미입력"}
+      </Typography>
+      <Typography>
+        본사전화: {formData.headquartersPhone || "미입력"}
+      </Typography>
+      <Typography>
+        공장 주소: {formData.factoryAddress || "미입력"}
+      </Typography>
+      <Typography>
+        공장전화: {formData.factoryPhone || "미입력"}
+      </Typography>
+      <Typography>
+        업종:{" "} 
+        {formData.businessType === "기타"
+          ? formData.businessTypeText || "미입력"
+          : formData.businessType || "미선택"}
+      </Typography>
+      <Typography>
+        산업분류코드: {formData.ksicCode || "없음"}
+      </Typography>
+      <Typography>
+        생산품목: {formData.products || "미입력"}
+      </Typography>
+      <Typography>
+        주거래처: {formData.client || "미입력"}
+      </Typography>
+      <Typography>
+        거래은행: {formData.bank.length > 0 ? formData.bank.join(", ") : "미입력"}
+      </Typography>
+      <Typography>
+        공장규모:{" "}
+        {Object.entries(formData.factoryScale)
+          .filter(([_, v]) => v)
+          .map(([k]) => {
+            const labelMap = {
+              owned: "자가공장",
+              large: "대공장",
+              registered: "등록",
+              unregistered: "무등록",
+            };
+            return labelMap[k];
+          })
+          .join(", ") || "미선택"}
+      </Typography>
+      <Typography>
+        공장부지: {formData.factoryLand ? `${formData.factoryLand} 평` : "미입력"}
+      </Typography>
+      <Typography>
+        공장건물: {formData.factoryBuilding ? `${formData.factoryBuilding} 평` : "미입력"}
+      </Typography>
+      {/* 저장 버튼 추가 */}
+      <Button variant="contained" color="primary" sx={{ mt: 3 }}>
+        저장하기
+      </Button>
+    </Paper>
+  );
 
-return (
-  <ThemeProvider theme={theme}>
-    <Box sx={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
-      <Typography variant="h4" align="center" gutterBottom>
-        📝 사업계획서
-      </Typography>
-  
-      <Typography variant="h5" sx={{ mt: 4, mb: 2 }}>
-        📄 기본정보
-      </Typography>
-      
-      {renderCompanyInfo()}
-      {renderPreview()}
-    </Box>
-  </ThemeProvider>
-);
+  return (
+    <ThemeProvider theme={theme}>
+      <Box sx={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
+        {/* Stepper 표시시 */}
+        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+          {steps.map((label, index) => (
+            <Step key={index}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        {/* 단계별 화면 렌더링 */}
+        {activeStep === 0 && (
+          <>
+            <Typography variant="h4" align="center" gutterBottom>📝 사업계획서</Typography>
+            <CoverSection formData={formData} onChange={handleInputChange} />
+          </>
+        )}
+
+        {activeStep === 1 && (
+          <>
+            <Typography variant="h5" sx={{ mt: 2, mb: 2 }}>📄 기본정보</Typography>
+            {renderCompanyInfo()}
+          </>
+        )}
+
+        {activeStep === 2 && (
+          <>
+            <Typography variant="h5" sx={{ mt: 2, mb: 2 }}>👀 미리보기</Typography>
+            {renderPreview()}
+          </>
+        )}
+
+        {/* 네비게이션 버튼 */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+          <Button disabled={activeStep === 0} onClick={handleBack} variant="contained" color="primary">이전</Button>
+          <Button disabled={activeStep === steps.length - 1} onClick={handleNext} variant="contained" color="primary">다음</Button>
+        </Box>
+      </Box>
+    </ThemeProvider>
+  );
 };
 
 // 스타일 정의
