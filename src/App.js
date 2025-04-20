@@ -1,16 +1,26 @@
 import React, { useState } from "react";
 
 // MUI 컴포넌트
-import TextField from "@mui/material/TextField";
-import Select from "@mui/material/Select";
-import MenuItem from "@mui/material/MenuItem";
-import InputLabel from "@mui/material/InputLabel";
-import FormControl from "@mui/material/FormControl";
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { Paper, Typography, Button, Box } from "@mui/material";
-import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
-import ToggleButton from "@mui/material/ToggleButton";
-import { Stepper, Step, StepLabel } from '@mui/material';
+import {
+  TextField,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  ThemeProvider,
+  createTheme,
+  Paper,
+  Typography,
+  Button,
+  Box,
+  ToggleButtonGroup,
+  ToggleButton,
+  Stepper,
+  Step,
+  StepLabel,
+  Autocomplete,
+  Chip
+} from "@mui/material";
 
 // 기본 폰트 지정 
 const theme = createTheme({
@@ -34,19 +44,78 @@ const CoverSection = ({ formData, onChange }) => {
       />
       <TextField
         fullWidth
+        name="title"
+        label="제목"
+        value={formData.title}
+        onChange={onChange}
+        variant="outlined"
+        size="small"
+        sx={{ mb: 2 }}
+      />
+      <TextField
+        fullWidth
+        label="부제목"
+        name="subtitle"
+        value={formData.subtitle}
+        onChange={onChange}
+        variant="outlined"
+        size="small"
+        sx={{ mb: 2 }}
+      />
+      <TextField
+        fullWidth
         label="설립년월일"
         type="month"
         name="establishmentDate"
         value={formData.establishmentDate}
         onChange={onChange}
+        InputLabelProps={{ shrink: true }}
+        sx={{ mb: 2 }}
+        size="small"
       />
-    </Box>
+
+      {/* 미리보기 영역 */}
+      <Box sx={{ width: "100%", mt: 5 }}>
+  <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+    👀 미리보기
+  </Typography>
+
+  <Box
+    sx={{
+      width: "100%",              
+      minHeight: "300px",         
+      p: 4,
+      border: "1px solid #ddd",
+      borderRadius: 3,
+      backgroundColor: "#fafafa",
+      textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+    }}
+  >
+    <Typography variant="h5" fontWeight="bold" gutterBottom>
+      {formData.title || "제목"}
+    </Typography>
+    <Typography variant="body1" color="text.secondary" gutterBottom>
+      {formData.subtitle || "부제목"}
+    </Typography>
+    <Typography variant="body2" sx={{ mt: 7 }}>
+      {formData.establishmentDate
+        ? `${formData.establishmentDate.split("-")[0]}. ${formData.establishmentDate.split("-")[1]}.`
+        : "설립일 미입력"}
+    </Typography>
+    <Typography variant="h6" fontWeight="bold" sx={{ mt: 2 }}>
+      {formData.companyName || "회사명"}
+    </Typography>
+  </Box>
+</Box> 
+</Box>
   );
 };
 
 // BankSelector 컴포넌트
 const BankSelector = ({ selectedBanks, setSelectedBanks }) => {
-  const [input, setInput] = useState("");
 
   const bankList = [
     "국민은행",
@@ -75,111 +144,32 @@ const BankSelector = ({ selectedBanks, setSelectedBanks }) => {
     "산림조합중앙회",
   ];
 
-  const handleSelect = (bank) => {
-    if (!selectedBanks.includes(bank)) {
-      setSelectedBanks([...selectedBanks, bank]);
-    }
-    setInput("");
-  };
-
-  const handleRemove = (bank) => {
-    setSelectedBanks(selectedBanks.filter((b) => b !== bank));
-  };
-
-  const filteredBanks = bankList.filter(
-    (b) =>
-      b.toLowerCase().includes(input.toLowerCase()) &&
-      !selectedBanks.includes(b)
-  );
-
   return (
-    <div style={{ width: "100%" }}>
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "5px",
-          margin: "10px 0",
-          padding: "8px",
-          border: "1px solid #ccc",
-          borderRadius: "6px",
-          backgroundColor: "#f9f9f9",
-        }}
-      >
-        {selectedBanks.map((bank, idx) => (
-          <span
-            key={idx}
-            style={{
-              padding: "5px 10px",
-              backgroundColor: "#e0e0e0",
-              borderRadius: "15px",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            {bank}
-            <button
-              onClick={() => handleRemove(bank)}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "bold",
-                color: "#333",
-              }}
-            >
-              ×
-            </button>
-          </span>
-        ))}
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="거래은행을 입력하세요"
-          style={{
-            flex: 1,
-            border: "none",
-            outline: "none",
-            minWidth: "150px",
-          }}
+    <Autocomplete
+      multiple
+      options={bankList}
+      value={selectedBanks}
+      onChange={(event, newValue) => {
+        setSelectedBanks(newValue);
+      }}
+      renderTags={(value, getTagProps) =>
+        value.map((option, index) => (
+          <Chip
+            label={option}
+            {...getTagProps({ index })}
+            key={option}
+          />
+        ))
+      }
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          variant="outlined"
+          label="거래은행을 입력하거나 선택하세요"
+          size="small"
         />
-      </div>
-
-      {input && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            maxHeight: "150px",
-            overflowY: "auto",
-            background: "#fff",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          {filteredBanks.length > 0 ? (
-            filteredBanks.map((bank, idx) => (
-              <div
-                key={idx}
-                onClick={() => handleSelect(bank)}
-                style={{
-                  padding: "8px",
-                  cursor: "pointer",
-                  borderBottom: "1px solid #eee",
-                }}
-              >
-                {bank}
-              </div>
-            ))
-          ) : (
-            <div style={{ padding: "8px", color: "#777" }}>
-              검색 결과가 없습니다.
-            </div>
-          )}
-        </div>
       )}
-    </div>
+    />
   );
 };
 
@@ -228,14 +218,33 @@ const App = () => {
   // 사업자등록번호 변경 핸들러
   const handleBusinessNumberChange = (e) => {
     const { name, value } = e.target;
-    const formattedValue = value.replace(/(\d{3})(\d{2})(\d{5})/, "$1-$2-$3");
+    let numbersOnly = value.replace(/\D/g, "");
+    if (numbersOnly.length > 10) {
+      numbersOnly = numbersOnly.slice(0, 10);
+    }
+    const formattedValue = numbersOnly.replace(
+      /(\d{3})(\d{2})(\d{5})/,
+      (match, p1, p2, p3) =>
+        [p1, p2, p3].filter(Boolean).join("-")
+    );
+
     setFormData({ ...formData, [name]: formattedValue });
   };
   
   // 전화번호 변경 핸들러
   const handlePhoneChange = (e) => {
     const { name, value } = e.target;
-    const formattedValue = value.replace(/(\d{3})(\d{4})(\d{4})/, "$1-$2-$3");
+    let numbersOnly = value.replace(/\D/g, "");
+    if (numbersOnly.length > 11) {
+      numbersOnly = numbersOnly.slice(0, 11);
+    }
+
+    const formattedValue = numbersOnly.replace(
+      /(\d{3})(\d{4})(\d{4})/,
+      (match, p1, p2 ,p3) =>
+        [p1, p2, p3].filter(Boolean).join("-")
+    );
+
     setFormData({ ...formData, [name]: formattedValue });
   };
   
@@ -319,212 +328,263 @@ const App = () => {
           name="companyName"
           value={formData.companyName}
           onChange={handleInputChange}
-          placeholder="예: 파도 푸드컴퍼니"
           variant="outlined"
           size="small"
-          sx={{ mb: 2 }}
+        />
+      </Box>
+      
+      {/* 설립년월일 */}
+      <Box sx={{ mb: 2 }}>
+      <TextField
+        fullWidth
+        label="설립년월일"
+        type="month"
+        name="establishmentDate"
+        value={formData.establishmentDate}
+        onChange={handleInputChange}
+        InputLabelProps={{ shrink: true }}
+        size="small"
         />
       </Box>
 
-      {/* 설립년월일 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>설립년월일</label>
-        <input
-          style={styles.input}
-          type="month"
-          name="establishmentDate"
-          value={formData.establishmentDate}
-          onChange={handleInputChange}
-        />
-      </div>
-
       {/* 사업자등록번호 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>사업자등록번호</label>
-        <input
-          style={styles.input}
-          type="text"
-          name="businessNumber"
-          value={formData.businessNumber}
-          onChange={handleBusinessNumberChange}
-          placeholder="000-00-00000"
-          maxLength={12}
+      <Box sx={{ mb:2}}>
+        <TextField
+        fullWidth
+        label="사업자등록번호"
+        name="businessNumber"
+        value={formData.businessNumber}
+        onChange={handleBusinessNumberChange}
+        variant="outlined"
+        size="small"
+        placeholder="000-00-00000"
         />
-      </div>
+      </Box>
 
       {/* 대표자 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>대표자</label>
-        <input
-          style={styles.input}
-          type="text"
-          name="representative"
-          value={formData.representative}
-          onChange={handleInputChange}
-          placeholder="예: 김대표"
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="대표자"
+        name="representative"
+        value={formData.representative}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="홍길동"
         />
-      </div>
-
+      </Box>
+      
       {/* 본사주소 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>본사주소</label>
-        <input
-          style={styles.input}
-          type="text"
-          name="headquartersAddress"
-          value={formData.headquartersAddress}
-          onChange={handleInputChange}
-          placeholder="예: 서울특별시 강남구 테헤란로 123"
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="본사주소"
+        name="headquartersAddress"
+        value={formData.headquartersAddress}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="서울특별시 강남구 테헤란로 123"
         />
-      </div>
+      </Box>
 
-       {/* 본사전화 */}
-       <div style={styles.formGroup}>
-        <label style={styles.label}>본사전화</label>
-        <input
-          style={styles.input}
-          type="tel"
-          name="headquartersPhone"
-          value={formData.headquartersPhone}
-          onChange={handlePhoneChange}
-          placeholder="예: 010-1234-5678"
-          maxLength={13}
+      {/* 본사전화 */}
+      <Box sx={{ mb:2}}>
+        <TextField
+        fullWidth
+        label="본사전화"
+        name="headquartersPhone"
+        value={formData.headquartersPhone}
+        onChange={handlePhoneChange}
+        variant="outlined"
+        size="small"
+        placeholder="000-0000-0000"
         />
-      </div>
+      </Box>
 
-      {/* 공장주소 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>공장주소</label>
-        <input
-          style={styles.input}
-          type="text"
-          name="factoryAddress"
-          value={formData.factoryAddress}
-          onChange={handleInputChange}
-          placeholder="예: 경기도 시흥시 시화공단로 456"
+      {/* 대표자 */}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="공장주소"
+        name="factoryAddress"
+        value={formData.factoryAddress}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="경기도 시흥시 시화공단로 456"
         />
-      </div>
+      </Box>
 
        {/* 공장전화 */}
-       <div style={styles.formGroup}>
-        <label style={styles.label}>공장전화</label>
-        <input
-          style={styles.input}
-          type="tel"
-          name="factoryPhone"
-          value={formData.factoryPhone}
-          onChange={handlePhoneChange}
-          placeholder="예: 010-1234-5678"
-          maxLength={13}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="공장전화"
+        name="factoryPhone"
+        value={formData.factoryPhone}
+        onChange={handlePhoneChange}
+        variant="outlined"
+        size="small"
+        placeholder="000-0000-0000"
         />
-      </div>
+      </Box>
       
-      {/* 업종선택 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>업종선택</label>
-        <div style={{ width: "100%" }}>
-          <select
-            style={styles.input2}
-            onChange={(e) => handleIndustryChange(e.target.value)}
-            value={formData.businessType}
-          >
-            <option value="">업종을 선택하세요</option>
-            {industryList
-              .filter((item) => !item.type)
-              .map((item) => (
-                <option key={item.code} value={item.label}>
-                  {item.label}
-                </option>
-              ))}
-            <option value="기타">기타 (직접 입력)</option>
-          </select>
-        </div>
-      </div> 
+       {/* 업종선택 */}
+      <Box sx={{ mb: 2 }}>
+        
+        <TextField
+          select
+          fullWidth
+          label="업종"
+          value={formData.businessType}
+          onChange={(e) => handleIndustryChange(e.target.value)}
+          size="small"
+          variant="outlined"
+        >
+        {industryList
+          .filter((item) => !item.type)
+          .map((item) => (
+            <MenuItem key={item.code} value={item.label}>
+              {item.label}
+            </MenuItem>
+          ))}
+        <MenuItem value="기타">기타 (직접 입력)</MenuItem>
+      </TextField>
+
+        {/* 기타 업종 선택 시 입력란 표시 */}
+        {formData.businessType === "기타" && (
+          <TextField
+            fullWidth
+            label="직접 업종 입력"
+            name="businessTypeText"
+            value={formData.businessTypeText}
+            onChange={handleInputChange}
+            size="small"
+            variant="outlined"
+            sx={{ mt: 2 }}
+          />
+        )}
+
+        {/* KSIC 코드 자동 표시 */}
+        {formData.ksicCode && (
+          <Typography sx={{ mt: 2, fontSize: "14px", color: "#666" }}>
+            <strong>산업분류코드 (KSIC):</strong> {formData.ksicCode}
+          </Typography>
+        )}
+      </Box>
 
       {/* 생산품목 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>생산품목</label>
-        <input
-          style={styles.input}
-          type="text"
-          name="products"
-          value={formData.products}
-          onChange={handleInputChange}
-          placeholder="예: 샌드위치, 크로와상, 치아바타 등"
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="생산품목"
+        name="products"
+        value={formData.products}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
         />
-      </div>
+      </Box>
 
       {/* 주거래처 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>주거래처</label>
-        <input
-          style={styles.input}
-          type="text"
-          name="client"
-          value={formData.client}
-          onChange={handleInputChange}
-          placeholder="예: 프렌차이즈, 마트, 기업 등"
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="주거래처"
+        name="client"
+        value={formData.client}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
         />
-      </div>
+      </Box>
 
       {/* 거래은행 */}
-      <div style={styles.formGroup}>
-        <label style={styles.label}>거래은행</label>
-        <BankSelector
-          selectedBanks={formData.bank}
-          setSelectedBanks={(banks) =>
-            setFormData({ ...formData, bank: banks })
-          }
-        />
-      </div>
+      <Box sx={{ mb: 0.5
+       }}>
+      <Typography
+        variant="subtitle2"
+        sx={{
+        fontWeight: "bold",
+        fontSize: "14px",
+        mb: 0.5,
+        color: "rgba(0, 0, 0, 0.6)",
+        }}
+      >
+        거래은행
+      </Typography>
+
+      <BankSelector
+        selectedBanks={formData.bank}
+        setSelectedBanks={(banks) =>
+        setFormData({ ...formData, bank: banks })
+        }
+     />
+      </Box>
 
      {/* 공장규모 */}
-     <div style={styles.formGroup}>
-        <label style={styles.label}>공장규모</label>
-
-     {/* 공장유형 선택 */}
-     <ToggleButtonGroup
+     <Box sx={{ mb: 2 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: "bold", color: "rgba(0,0,0,0.6)" }}
+        >
+          공장규모
+      </Typography>
+ 
+      {/* 공장유형 선택 */}
+      <ToggleButtonGroup
         value={Object.entries(formData.factoryScale)
           .filter(([_, checked]) => checked)
           .map(([key]) => key)}
         onChange={handleFactoryScaleToggle}
-        aria-label="factory scale">
-
-        <ToggleButton value="owned" aria-label="자가공장">자가공장</ToggleButton>
-        <ToggleButton value="large" aria-label="대공장">대공장</ToggleButton>
-        <ToggleButton value="registered" aria-label="등록">등록</ToggleButton>
-        <ToggleButton value="unregistered" aria-label="무등록">무등록</ToggleButton>
+        aria-label="factory scale"
+        sx={{ width: "100%", flexWrap: "wrap" }}
+      >
+        <ToggleButton value="owned" aria-label="자가공장">
+          자가공장
+        </ToggleButton>
+        <ToggleButton value="large" aria-label="대공장">
+          대공장
+        </ToggleButton>
+        <ToggleButton value="registered" aria-label="등록">
+          등록
+        </ToggleButton>
+        <ToggleButton value="unregistered" aria-label="무등록">
+          무등록
+        </ToggleButton>
       </ToggleButtonGroup>
+      </Box>
 
-      {/* 평수 입력 */}
-      <div>
-        <div style={{ marginBottom: "10px" }}>
-          <label style={styles.label}>공장 부지</label>
-          <input
-            style={styles.input}
-            type="text"
-            name="factoryLand"
-            value={formData.factoryLand}
-            onChange={handleFactorySizeChange}
-            placeholder="단위: 평"
-          />
-        </div>
-        <div>
-          <label style={styles.label}>공장 건물</label>
-          <input
-            style={styles.input}
-            type="text"
-            name="factoryBuilding"
-            value={formData.factoryBuilding}
-            onChange={handleFactorySizeChange}
-            placeholder="단위: 평"
-          />
-        </div>
-      </div>
-     </div>
+      {/* 평수입력 */}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="공장부지"
+        name="factoryLand"
+        value={formData.factoryLand}
+        onChange={handleFactorySizeChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 평"
+        />
+      </Box>
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="공장건물"
+        name="factoryBuilding"
+        value={formData.factoryBuilding}
+        onChange={handleFactorySizeChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 평"
+        />
+      </Box>
     </div>
   );
-
+  
   //미리보기 섹션 렌더링 
   const renderPreview = () => (
     <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
