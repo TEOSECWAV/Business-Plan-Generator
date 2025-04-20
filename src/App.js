@@ -40,6 +40,7 @@ const CoverSection = ({ formData, onChange }) => {
         name="companyName"
         value={formData.companyName}
         onChange={onChange}
+        size="small"
         sx={{ mb: 2 }}
       />
       <TextField
@@ -584,7 +585,7 @@ const App = () => {
       </Box>
     </div>
   );
-  
+
   //미리보기 섹션 렌더링 
   const renderPreview = () => (
     <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
