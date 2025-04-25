@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 // MUI 컴포넌트
 import {
@@ -19,7 +19,7 @@ import {
   Step,
   StepLabel,
   Autocomplete,
-  Chip
+  Chip,
 } from "@mui/material";
 
 // 기본 폰트 지정 
@@ -174,6 +174,7 @@ const BankSelector = ({ selectedBanks, setSelectedBanks }) => {
   );
 };
 
+//App 컴포넌트 내의 코드
 const App = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -197,8 +198,28 @@ const App = () => {
       unregistered: false,
     },
     factoryLand: "",   
-    factoryBuilding: "", 
+    factoryBuilding: "",
+    capital: "",
+    totalAssets: "",
+    salesAmount: "",
+    netIncome: "",
+    numEmployees: "",
+    businessYear: "",
   });
+
+  //백만원 단위 고정 컴포넌트트
+  const capitalRef = useRef(null);
+  const totalAssetsRef = useRef(null);
+  const salesAmountRef = useRef(null);
+  const netIncomeRef = useRef(null);
+
+  const [CursorPositions, setInputCursorPositions] = useState
+    ({
+    capital: 0,
+    totalAssets: 0,
+    salesAmount: 0,
+    netIncome: 0
+    });
 
   const steps = ['표지', '기본정보', '미리보기'];
 
@@ -216,6 +237,28 @@ const App = () => {
     setFormData({ ...formData, [name]: value });
   };
   
+  //3자리마다 , 추가 함수 
+  const formatNumberwithCommas = (number) => {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");
+  };
+
+  // 회계 입력 필드 변경 핸들러
+  const handleAmountInputChange = (e) => {
+    const { name, value } = e.target;
+    const numericValue = value.replace(/[^0-9]/g, '');
+    setInputCursorPositions({
+      ...CursorPositions,
+      [name]: e.target.selectionStart
+    });
+    
+    if (numericValue === '' || /^[0-9]+$/.test(numericValue)) {
+      setFormData({
+        ...formData,
+        [name]: numericValue
+      });
+    }
+  };
+
   // 사업자등록번호 변경 핸들러
   const handleBusinessNumberChange = (e) => {
     const { name, value } = e.target;
@@ -248,7 +291,30 @@ const App = () => {
 
     setFormData({ ...formData, [name]: formattedValue });
   };
-  
+
+  //useEffect
+  useEffect(() => {
+    const updateCursorPosition = (ref, fieldName) => {
+      if (ref.current) {
+        const input = ref.current.querySelector('input');
+        if (input) {
+          setTimeout(() => {
+            const newCursorPos = Math.min(
+              CursorPositions[fieldName], 
+              (formData[fieldName] || '').length
+            );
+            input.setSelectionRange(newCursorPos, newCursorPos);
+          }, 0);
+        }
+      }
+    };
+
+    updateCursorPosition(capitalRef, 'capital');
+    updateCursorPosition(totalAssetsRef, 'totalAssets');
+    updateCursorPosition(salesAmountRef, 'salesAmount');
+    updateCursorPosition(netIncomeRef, 'netIncome');
+  }, [formData.capital, formData.totalAssets, formData.salesAmount, formData.netIncome, CursorPositions]);
+
   // 업종 선택 핸들러
   const handleIndustryChange = (selectedLabel) => {
     if (selectedLabel === "기타") {
@@ -321,6 +387,7 @@ const App = () => {
   // 표지 및 기본정보 섹션 렌더링
   const renderCompanyInfo = () => (
     <div style={styles.section}>
+
       {/* 회사명 */}
       <Box sx={{ mb: 2 }}>
         <TextField
@@ -434,7 +501,6 @@ const App = () => {
       
        {/* 업종선택 */}
       <Box sx={{ mb: 2 }}>
-        
         <TextField
           select
           fullWidth
@@ -583,6 +649,92 @@ const App = () => {
         placeholder="단위: 평"
         />
       </Box>
+
+      {/* 자본금 */}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        ref={capitalRef}
+        fullWidth
+        label="자본금"
+        name="capital"
+        value={formData.capital ? `${formatNumberwithCommas(formData.capital)}  백만원` : ''}
+        onChange={handleAmountInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 백만원"
+        />
+      </Box>
+
+      {/* 총자산 */}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        ref={totalAssetsRef}
+        fullWidth
+        label="총자산"
+        name="totalAssets"
+        value={formData.totalAssets ? `${formatNumberwithCommas(formData.totalAssets)}  백만원` : ''}
+        onChange={handleAmountInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 백만원"
+        />
+      </Box>
+
+      {/* 매출액 */}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        ref={salesAmountRef}
+        fullWidth
+        label="매출액"
+        name="salesAmount"
+        value={formData.salesAmount ? `${formatNumberwithCommas(formData.salesAmount)}  백만원` : ''}
+        onChange={handleAmountInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 백만원"
+        />
+      </Box>
+
+      {/* 순이익 */}
+      <Box sx={{ mb:2 }}>
+        <TextField
+        ref={netIncomeRef}
+        fullWidth
+        label="순이익"
+        name="netIncome"
+        value={formData.netIncome ? `${formatNumberwithCommas(formData.netIncome)}  백만원` : ''}
+        onChange={handleAmountInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 백만원"
+        />
+      </Box>
+
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="종업원수"
+        name="numEmployees"
+        value={formData.numEmployees}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 명"
+        />
+      </Box>
+
+      <Box sx={{ mb:2 }}>
+        <TextField
+        fullWidth
+        label="사업규모"
+        name="businessYear"
+        value={formData.businessYear}
+        onChange={handleInputChange}
+        variant="outlined"
+        size="small"
+        placeholder="단위: 년"
+        />
+      </Box>
     </div>
   );
 
@@ -653,6 +805,25 @@ const App = () => {
       <Typography>
         공장건물: {formData.factoryBuilding ? `${formData.factoryBuilding} 평` : "미입력"}
       </Typography>
+      <Typography>
+        자본금: {formData.capital ? `${formatNumberwithCommas(formData.capital)}백만원` : "미입력"}
+      </Typography>
+      <Typography>
+        총자산: {formData.totalAssets ? `${formatNumberwithCommas(formData.capital)}백만원` : "미입력"}
+      </Typography>
+      <Typography>
+        매출액: {formData.salesAmount ? `${formatNumberwithCommas(formData.capital)}백만원` : "미입력"}
+      </Typography>
+      <Typography>
+        순이익: {formData.netIncome ? `${formatNumberwithCommas(formData.capital)}백만원` : "미입력"}
+      </Typography>
+      <Typography>
+        종업원수: {formData.numEmployees || "미입력"}
+      </Typography>
+      <Typography>
+        사업규모: {formData.businessYear || "미입력"}
+      </Typography>
+
       {/* 저장 버튼 추가 */}
       <Button variant="contained" color="primary" sx={{ mt: 3 }}>
         저장하기
